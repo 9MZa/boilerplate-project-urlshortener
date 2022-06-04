@@ -38,7 +38,7 @@ let Url = mongoose.model('Url', urlSchema)
 
 let responseObject = {}
 
-app.post('/api/shorturl/new', bodyParser.urlencoded({ extended: false }), (req, res) => {
+app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res) => {
 
   let inputUrl = req.body.url
 
