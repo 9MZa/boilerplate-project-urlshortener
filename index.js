@@ -48,18 +48,11 @@ app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res
   let parsedUrl = urlParser(inputUrl, true)
 
   const protocolRegExp = /^https?:\/\/(.*)/i;
-  const hostnameRegExp = /^([a-z0-9\-_]+\.)+[a-z0-9\-_]+/i;
 
   const protocolMatch = inputUrl.match(protocolRegExp);
   if (!protocolMatch) {
     return res.json({ error: 'invalid URL' })
   }
-
-  const hostnameMatch = inputUrl.match(hostnameRegExp);
-  if (!hostnameMatch) {
-    return res.json({ error: 'invalid URL' })
-  }
-
 
   responseObject.original_url = inputUrl
   let inputShort = 1
