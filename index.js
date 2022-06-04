@@ -38,7 +38,10 @@ let urlSchema = new mongoose.Schema({
 
 let Url = mongoose.model('Url', urlSchema)
 
-let responseObject = {}
+let respondObject = {
+  original_url: '',
+  short_url: 0,
+}
 
 app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res) => {
 
@@ -50,10 +53,9 @@ app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res
     if (!address) {
       res.json({ error: 'invalid URL' })
     } else {
-      let newUrl = new Url({ original: inputUrl, })
-      newUrl.save((err, data) => {
-        res.json({ original_url: data.original, short_url: data.short })
-      })
+      respondObject.original_url = inputUrl
+      respondObject.short_url += 1
+      res.json(respondObject)
     }
   })
 })
