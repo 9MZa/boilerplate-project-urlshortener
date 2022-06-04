@@ -39,16 +39,14 @@ let Url = mongoose.model('Url', urlSchema)
 let responseObject = {}
 
 app.post('/api/shorturl/new', bodyParser.urlencoded({ extended: false }), (req, res) => {
+
   let inputUrl = req.body.url
 
   let urlRegex = new RegExp(/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi)
 
-  if (!inputUrl.match(urlRegex)) {
-    res.json({ error: 'Invalid URL' })
-    return
-  }
+  !inputUrl.match(urlRegex) ? res.json({ error: 'Invalid URL' }) : null
 
-  res.original_url = inputUrl
+  responseObject.original_url = inputUrl
 
   let inputShort = 1
 
@@ -65,7 +63,7 @@ app.post('/api/shorturl/new', bodyParser.urlencoded({ extended: false }), (req, 
           { new: true, upsert: true },
           (error, savedUrl) => {
             if (!error) {
-              responseObject.short_ur = savedUrl.short
+              responseObject.short_url = savedUrl.short
               res.json(responseObject)
             }
           }
