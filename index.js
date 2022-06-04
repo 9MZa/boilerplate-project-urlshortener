@@ -4,6 +4,8 @@ const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser')
+const dns = require('dns');
+const urlParser = require('url-parse');
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
@@ -42,35 +44,18 @@ app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res
 
   let inputUrl = req.body.url
 
-  let urlRegex = new RegExp(/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi)
+  let parsedUrl = urlParser(inputUrl, true)
 
-  !inputUrl.match(urlRegex) ? res.json({ error: 'invalid url' }) : null
-
-  responseObject.original_url = inputUrl
-
-  let inputShort = 1
-
-  Url.findOne({})
-    .sort({ short: 'desc' })
-    .exec((error, result) => {
-      if (!error && result != undefined) {
-        inputShort = result.short + 1
-      }
-      if (!error) {
-        Url.findOneAndUpdate(
-          { original: inputUrl },
-          { original: inputUrl, short: inputShort },
-          { new: true, upsert: true },
-          (error, savedUrl) => {
-            if (!error) {
-              responseObject.short_url = savedUrl.short
-              res.json(responseObject)
-            }
-          }
-        )
-      }
-    })
-
+  let dnsLookup = dns.lookup(parsedUrl.hostname, (err, address) => {
+    if (!address) {
+      res.json({ error: 'invalid URL' })
+    } else {
+      let newUrl = new Url({ original: inputUrl, })
+      newUrl.save((err, data) => {
+        res.json({ original_url: data.original, short_url: data.short })
+      })
+    }
+  })
 })
 
 app.get('/api/shorturl/:input', (req, res) => {
