@@ -38,24 +38,40 @@ let urlSchema = new mongoose.Schema({
 
 let Url = mongoose.model('Url', urlSchema)
 
-let respondObject = {
-  original_url: '',
-  short_url: 0,
-}
+let responseObject = {}
 
 app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res) => {
 
   let inputUrl = req.body.url
-
   let parsedUrl = urlParser(inputUrl, true)
+
+  responseObject.original_url = inputUrl
+  let inputShort = 1
 
   let dnsLookup = dns.lookup(parsedUrl.hostname, (err, address) => {
     if (!address) {
-      res.json({ error: 'invalid URL' })
+      res.json({ error: 'invalid url' })
     } else {
-      respondObject.original_url = inputUrl
-      respondObject.short_url += 1
-      res.json(respondObject)
+      Url.findOne({})
+        .sort({ short: 'desc' })
+        .exec((error, result) => {
+          if (!error && result != undefined) {
+            inputShort = result.short + 1
+          }
+          if (!error) {
+            Url.findOneAndUpdate(
+              { original: inputUrl },
+              { original: inputUrl, short: inputShort },
+              { new: true, upsert: true },
+              (error, savedUrl) => {
+                if (!error) {
+                  responseObject.short_url = savedUrl.short
+                  res.json(responseObject)
+                }
+              }
+            )
+          }
+        })
     }
   })
 })
@@ -63,7 +79,7 @@ app.post('/api/shorturl/', bodyParser.urlencoded({ extended: false }), (req, res
 app.get('/api/shorturl/:input', (req, res) => {
   let input = req.params.input
 
-  Url.findOne({ short_url: input }, (error, result) => {
+  Url.findOne({ short: input }, (error, result) => {
     if (!error && result != undefined) {
       res.redirect(result.original)
     } else {
